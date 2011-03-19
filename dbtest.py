@@ -1,21 +1,48 @@
 # -*- coding: utf-8 -*-
 
-def test():
-  con = sqlite3.connect(deone_db)
-  con.text_factory=str
-  cur = con.cursor()
-  #s = '''create table %s(%s)'''%(tbl, s_cols.rstrip(','))
-  s = '''create table %s(date text, trans text, symbol text, qty real, price real)'''%(tbl)
-  
-  s = '''insert into %s values (%s)'''%(tbl, s_cols.rstrip(','))
-  cur.execute(s, t)
-  con.commit()
-  cur.close()
+from elixir import *
+from datetime import *
 
-  t = u'Éî·¢Õ¹£Á'.encode('utf-8')
-  cur.execute(u'select * from StockHist where ¹ÉÆ±Ãû³Æ=?'.encode('utf-8'), (t,))
-  for row in cur.fetchall()[0:3]:
-    today, open, high, low, close, volume=row[0], row[3], row[4], row[5], row[6], row[7]
+metadata.bind = "sqlite:///ziluolan.sqlitedb"
+metadata.bind.echo = True
+
+class Brand(Entity):
+    sn = Field(String(30))
+    name = Field(Unicode(30))
+
+class Product(Entity):
+    sn = Field(String(30))
+    price = Field(Float)
+    brand_id = Field(Integer)
+    
+class Cart(Entity):
+    sn = Field(String(30))
+    status = Field(Integer)
+    product_id = Field(Integer)
+    
+class Archive(Entity):
+    sn = Field(String(30))
+    date = Field(DateTime, default=datetime.now)
+    cart_id = Field(Integer)
+    
+import os
 
 if __name__ == '__main__':
-  test()
+    setup_all()
+    if not os.path.exists('ziluolan.sqlitedb'):
+        create_all()
+    
+    #query
+    brand = Brand.query.first()
+    if brand is None:
+        Brand(sn="ZL", name=u"ç´«ç½—å…°")
+        #insert
+    else:
+        if brand.sn != "ZLL":
+            #update
+            brand.sn = "ZLL"
+        else:
+            #delete
+            brand.delete()
+    
+    session.commit()

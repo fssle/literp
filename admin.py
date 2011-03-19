@@ -2,7 +2,8 @@
 
 from PyQt4 import QtCore, QtGui
 
-from querytable import QueryTableWidget
+from archivetable import ArchiveTable
+from datetime import *
 
 class AdminWidget(QtGui.QWidget):
     def __init__(self, parent):
@@ -37,13 +38,6 @@ class AdminWidget(QtGui.QWidget):
 
         hLayoutQuery = QtGui.QHBoxLayout()
 
-        self.label_brand = QtGui.QLabel(self)
-        hLayoutQuery.addWidget(self.label_brand)
-
-        self.lineEdit_brand = QtGui.QLineEdit(self)
-        self.lineEdit_brand.setGeometry(QtCore.QRect(80, 0, 113, 20))
-        hLayoutQuery.addWidget(self.lineEdit_brand)
-
         self.label_sn = QtGui.QLabel(self)
         hLayoutQuery.addWidget(self.label_sn)
 
@@ -57,31 +51,26 @@ class AdminWidget(QtGui.QWidget):
     
         mainLayout.addLayout(hLayoutQuery)
 
-        self.tableWidget_tbl = QtGui.QTableWidget(self)
-        self.tableWidget_tbl.setGeometry(QtCore.QRect(320, 20, 261, 231))
-        mainLayout.addWidget(self.tableWidget_tbl)
+        self.tableWidget = ArchiveTable(self)
+        self.tableWidget.setGeometry(QtCore.QRect(320, 20, 261, 231))
+        mainLayout.addWidget(self.tableWidget)
 
         hLayoutSummary = QtGui.QHBoxLayout()
-        
         self.label_number = QtGui.QLabel(self)
         hLayoutSummary.addWidget(self.label_number)
-
-        self.label_each = QtGui.QLabel(self)
-        hLayoutSummary.addWidget(self.label_each)
-
         self.label_pay = QtGui.QLabel(self)
         hLayoutSummary.addWidget(self.label_pay)
-
+        self.label_each = QtGui.QLabel(self)
+        hLayoutSummary.addWidget(self.label_each)
         mainLayout.addLayout(hLayoutSummary)
+
         self.setLayout(mainLayout)
 
         self.retranslateUi()
 
         QtCore.QObject.connect(self.pushButtonQuery, QtCore.SIGNAL("pressed()"), self.doQuery)
-        #self.emit(QtCore.SIGNAL("selectionChanged()"))
         
     def retranslateUi(self):
-        self.label_brand.setText(QtGui.QApplication.translate("MainWindow", "品牌", None, QtGui.QApplication.UnicodeUTF8))
         self.label_sdate.setText(QtGui.QApplication.translate("MainWindow", "开始日期", None, QtGui.QApplication.UnicodeUTF8))
         self.label_edate.setText(QtGui.QApplication.translate("MainWindow", "结束日期", None, QtGui.QApplication.UnicodeUTF8))
         self.label_sn.setText(QtGui.QApplication.translate("MainWindow", "代码", None, QtGui.QApplication.UnicodeUTF8))
@@ -92,18 +81,23 @@ class AdminWidget(QtGui.QWidget):
         
     def doQuery(self):
         print("called doQuery")
-        date = str(self.lineEdit.text())
-        #self.tblWidgetBK.query(u'select * from CategoryHist where 股票代码=?'.encode('utf-8'), (date,))
-        #self.tblWidgetBK.query(u'select * from CategoryHist'.encode('utf-8'), ())
-        pass
+        sdate = self.dateEdit_sdate.dateTime().toPyDateTime()
+        edate = self.dateEdit_edate.dateTime().toPyDateTime()
+        sn = str(self.lineEdit_sn.text())
+        """
+        #date<=DateTime("2011-03-18 23:59:59") and
+        #date>=DateTime("2011-02-18 00:00:00") and
+        #sn="REDUCE"
+        """
+        cond = " date<=DateTime(\"" + edate.strftime("%Y-%m-%d") + " 23:59:59\") "
+        cond += " and date>=DateTime(\"" + sdate.strftime("%Y-%m-%d") + " 00:00:00\") "
+        if len(sn) >0:
+            cond += " and sn=\"" + sn + "\" ";
+        self.tableWidget.query(cond)
 
-    def tblWidgetBK_selectionChanged(self):
-        print("called tblWidgetBK_selectionChanged")
-        row=self.tblWidgetBK.currentRow()
-        code = str(self.tblWidgetBK.item(row,0).text())
-        print(code)
-        #select * from StockHist where 股票代码 in (select 股票代码 from StockCategory where 板块代码='YH') 
-        self.tblWidgetGG.query(u'select * from StockHist where 股票代码 in (select 股票代码 from StockCategory where 板块代码=?)'.encode('utf-8'), (code,))
+        self.label_number.setText(QtGui.QApplication.translate("MainWindow", "数量:"+str(self.tableWidget.total_number), None, QtGui.QApplication.UnicodeUTF8))
+        self.label_each.setText(QtGui.QApplication.translate("MainWindow", "均价:%.02f"%(self.tableWidget.total_incoming/self.tableWidget.total_number), None, QtGui.QApplication.UnicodeUTF8))
+        self.label_pay.setText(QtGui.QApplication.translate("MainWindow", "总价:%.02f"%(self.tableWidget.total_incoming), None, QtGui.QApplication.UnicodeUTF8))
         
 #===============================================================================
 #   Example
